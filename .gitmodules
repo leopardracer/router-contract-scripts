@@ -1,0 +1,8 @@
+[submodule "contracts/router-gateway-contracts"]
+	path = contracts/router-gateway-contracts
+	url = git@github.com:router-protocol/router-gateway-contracts.git
+	branch = main
+[submodule "contracts/asset-bridge-contracts"]
+	path = contracts/asset-bridge-contracts
+	url = git@github.com:router-protocol/asset-bridge-contracts.git
+	branch = main
