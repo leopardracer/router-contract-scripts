@@ -567,23 +567,27 @@ export class EncodedWallet {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   async getAllMountedUSB(): Promise<string[]> {
-    const volumesPath = "/Volumes";
-    const volumes = fs.readdirSync(volumesPath);
+    try {
+      const volumesPath = "/Volumes";
+      const volumes = fs.readdirSync(volumesPath);
 
-    const usbDrives = volumes.filter((volume) => {
-      const volumePath = path.join(volumesPath, volume);
+      const usbDrives = volumes.filter((volume) => {
+        const volumePath = path.join(volumesPath, volume);
 
-      // Ensure it's a directory and filter out system-specific volumes
-      return (
-        fs.lstatSync(volumePath).isDirectory() &&
-        !["Macintosh HD", "Recovery", "Preboot", "VM"].includes(volume)
-      );
-    });
-    if (usbDrives.length === 0)
-      // console.log("No USB drives connected.");
+        // Ensure it's a directory and filter out system-specific volumes
+        return (
+          fs.lstatSync(volumePath).isDirectory() &&
+          !["Macintosh HD", "Recovery", "Preboot", "VM"].includes(volume)
+        );
+      });
+      if (usbDrives.length === 0)
+        // console.log("No USB drives connected.");
+        return [];
+      // console.log("Connected USB drives:");
+      return usbDrives.map((drive) => path.join(volumesPath, drive));
+    } catch (err) {
       return [];
-    // console.log("Connected USB drives:");
-    return usbDrives.map((drive) => path.join(volumesPath, drive));
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
