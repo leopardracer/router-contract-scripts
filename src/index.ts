@@ -7,10 +7,14 @@ import { gatewayHandler } from "./helper/gateway/index.ts";
 import { assetBridgeHandler } from "./helper/asset-bridge/index.ts";
 
 async function main() {
-  const program = new Command();
-  const client = new Client();
-  handle(client, program);
-  program.parse(process.argv);
+  try {
+    const program = new Command();
+    const client = new Client();
+    handle(client, program);
+    program.parse(process.argv);
+  } catch (error) {
+    throw error;
+  }
 }
 
 // Catch unhandled rejections
@@ -18,9 +22,12 @@ process.on("unhandledRejection", (reason) => {
   if (
     reason &&
     reason instanceof Error &&
-    reason.message.includes("ExitPromptError")
+    (reason.message.includes("ExitPromptError") ||
+      reason.name === "ExitPromptError" ||
+      reason.message.includes("User force closed the prompt"))
   ) {
-    console.log("\nPrompt exited by user.");
+    console.log("\nOperation cancelled by user.");
+    process.exit(0);
   } else {
     console.error("Unhandled rejection:", reason);
   }
@@ -34,8 +41,14 @@ process.on("SIGINT", () => {
 
 // Run the main function and catch any other errors
 main().catch((error) => {
-  if (error && error.message.includes("ExitPromptError")) {
-    console.log("\nPrompt closed by user.");
+  if (
+    error &&
+    (error.message.includes("ExitPromptError") ||
+      error.name === "ExitPromptError" ||
+      error.message.includes("User force closed the prompt"))
+  ) {
+    console.log("\nOperation cancelled by user (ctrl + c).");
+    process.exit(0);
   } else {
     console.error("An unexpected error occurred:", error);
   }
@@ -47,28 +60,40 @@ function handle(client: Client, command: Command) {
     .description("rsc handler")
     // .argument("<password>", "password to encrpt key")
     .action(async (password) => {
-      //@ts-ignore
-      let answers = await inquirer.prompt([
-        {
-          type: "list",
-          name: "option",
-          message: "Select your options:",
-          choices: ["Wallet", "Tokens", "Gateway", "Asset Bridge"],
-        },
-      ]);
-      switch (answers.option) {
-        case "Wallet":
-          await walletHandler(client, command);
-          break;
-        case "Tokens":
-          await tokenHandler(client, command);
-          break;
-        case "Gateway":
-          await gatewayHandler(client, command);
-          break;
-        case "Asset Bridge":
-          await assetBridgeHandler(client, command);
-          break;
+      try {
+        let answers = await inquirer.prompt([
+          {
+            type: "list",
+            name: "option",
+            message: "Select your options:",
+            choices: ["Wallet", "Tokens", "Gateway", "Asset Bridge"],
+          },
+        ]);
+        switch (answers.option) {
+          case "Wallet":
+            await walletHandler(client, command);
+            break;
+          case "Tokens":
+            await tokenHandler(client, command);
+            break;
+          case "Gateway":
+            await gatewayHandler(client, command);
+            break;
+          case "Asset Bridge":
+            await assetBridgeHandler(client, command);
+            break;
+        }
+      } catch (error) {
+        // if (
+        //   error &&
+        //   (error.message.includes("ExitPromptError") ||
+        //     error.name === "ExitPromptError" ||
+        //     error.message.includes("User force closed the prompt"))
+        // ) {
+        //   console.log("\nOperation cancelled by user.");
+        //   process.exit(0);
+        // }
+        throw error;
       }
     });
 }

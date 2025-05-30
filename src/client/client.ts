@@ -211,21 +211,21 @@ export class Client {
     const GatewayUpgradeable = await fs.readJSON(
       path.join(
         __dirname,
-        "../../contracts/router-gateway-contracts/evm/artifacts/foundry/GatewayUpgradeable.sol/GatewayUpgradeable.json"
+        "../../router-contracts/router-gateway-contracts/evm/artifacts/foundry/GatewayUpgradeable.sol/GatewayUpgradeable.json"
       ),
       "utf-8"
     );
     const ValsetUpdate = await fs.readJSON(
       path.join(
         __dirname,
-        "../../contracts/router-gateway-contracts/evm/artifacts/foundry/ValsetUpdate.sol/ValsetUpdate.json"
+        "../../router-contracts/router-gateway-contracts/evm/artifacts/foundry/ValsetUpdate.sol/ValsetUpdate.json"
       ),
       "utf-8"
     );
     const TestRoute = await fs.readJSON(
       path.join(
         __dirname,
-        "../../contracts/router-gateway-contracts/evm/artifacts/foundry/TestRoute.sol/TestRoute.json"
+        "../../router-contracts/router-gateway-contracts/evm/artifacts/foundry/TestRoute.sol/TestRoute.json"
       ),
       "utf-8"
     );
@@ -237,7 +237,7 @@ export class Client {
     const AssetVault = await fs.readJSON(
       path.join(
         __dirname,
-        "../../contracts/router-gateway-contracts/evm/artifacts/foundry/AssetVault.sol/AssetVault.json"
+        "../../router-contracts/router-gateway-contracts/evm/artifacts/foundry/AssetVault.sol/AssetVault.json"
       ),
       "utf-8"
     );
@@ -327,11 +327,10 @@ export class Client {
     const tx = await proxyContract.waitForDeployment();
     const proxyContractAddress = await proxyContract.getAddress();
 
+    let block = await tx.deploymentTransaction()?.getBlock();
     spinner.succeed(
       chalk.green(
-        `Proxy deployed at: ${proxyContractAddress} | BlockNumber: ${
-          tx.deploymentTransaction()?.blockNumber
-        }`
+        `[Share With Router Team] Proxy deployed at: ${proxyContractAddress} | BlockNumber: ${block?.number}`
       )
     );
 
@@ -394,7 +393,7 @@ export class Client {
     const AssetForwarder = await fs.readJSON(
       path.join(
         __dirname,
-        "../../contracts/asset-forwarder-contracts/evm/artifacts/foundry/AssetForwarder.sol/AssetForwarder.json"
+        "../../router-contracts/asset-forwarder-contracts/evm/artifacts/foundry/AssetForwarder.sol/AssetForwarder.json"
       ),
       "utf-8"
     );
@@ -420,9 +419,9 @@ export class Client {
     await this.verifier.verify(assetForwarderAddress, args, {
       cwd: path.join(
         __dirname,
-        "../../contracts/asset-forwarder-contracts/evm"
+        "../../router-contracts/asset-forwarder-contracts/evm"
       ),
-      contractPath: `contracts/AssetForwarder.sol`,
+      contractPath: `router-contracts/AssetForwarder.sol`,
       contractName: "AssetForwarder",
     });
     spinner.succeed(
@@ -437,7 +436,7 @@ export class Client {
     const AssetBridgeUpgradeable = await fs.readJSON(
       path.join(
         __dirname,
-        "../../contracts/asset-bridge-contracts/evm/artifacts/foundry/AssetBridgeUpgradeable.sol/AssetBridgeUpgradeable.json"
+        "../../router-contracts/asset-bridge-contracts/evm/artifacts/foundry/AssetBridgeUpgradeable.sol/AssetBridgeUpgradeable.json"
       ),
       "utf-8"
     );
@@ -477,18 +476,20 @@ export class Client {
     const tx = await proxyContract.waitForDeployment();
     const proxyContractAddress = await proxyContract.getAddress();
 
+    let block = await tx.deploymentTransaction()?.getBlock();
     spinner.succeed(
       chalk.green(
-        `Proxy deployed at: ${proxyContractAddress} | BlockNumber: ${
-          tx.deploymentTransaction()?.blockNumber
-        }`
+        `[Share With Router Team] Proxy deployed at: ${proxyContractAddress} | BlockNumber: ${block?.number}`
       )
     );
 
     await sleep(6000);
     await this.verifier.verify(proxyContractAddress, args, {
-      cwd: path.join(__dirname, "../../contracts/asset-bridge-contracts/evm"),
-      contractPath: `contracts/AssetBridgeUpgradeable.sol`,
+      cwd: path.join(
+        __dirname,
+        "../../router-contracts/asset-bridge-contracts/evm"
+      ),
+      contractPath: `router-contracts/AssetBridgeUpgradeable.sol`,
       contractName: "AssetBridgeUpgradeable",
     });
 
@@ -535,7 +536,7 @@ export class Client {
     const Token = await fs.readJSON(
       path.join(
         __dirname,
-        `../../contracts/asset-forwarder-contracts/evm/artifacts/foundry/${
+        `../../router-contracts/asset-forwarder-contracts/evm/artifacts/foundry/${
           !isMintable ? "ERC20Token" : "ERC20MintableToken"
         }.sol/${!isMintable ? "ERC20Token" : "ERC20MintableToken"}.json`
       ),
@@ -557,9 +558,9 @@ export class Client {
     await this.verifier.verify(tokenAddress, args, {
       cwd: path.join(
         __dirname,
-        "../../contracts/asset-forwarder-contracts/evm"
+        "../../router-contracts/asset-forwarder-contracts/evm"
       ),
-      contractPath: `contracts/${
+      contractPath: `router-contracts/${
         !isMintable ? "ERC20Token" : "ERC20MintableToken"
       }.sol`,
       contractName: !isMintable ? "ERC20Token" : "ERC20MintableToken",

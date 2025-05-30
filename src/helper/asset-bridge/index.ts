@@ -14,7 +14,9 @@ import { ethers } from "ethers";
 import { askShowPrivate } from "../asker/wallet";
 
 export async function assetBridgeHandler(client: Client, command: Command) {
-  const { option } = await inquirer.prompt([
+  const prompts = inquirer.createPromptModule();
+
+  const { option } = await prompts([
     {
       type: "list",
       name: "option",
@@ -30,7 +32,8 @@ export async function assetBridgeHandler(client: Client, command: Command) {
       ],
     },
   ]);
-  const { chainType, rotuerChainEnvironment } = await inquirer.prompt([
+
+  const { chainType, rotuerChainEnvironment } = await prompts([
     {
       type: "list",
       name: "chainType",
@@ -48,7 +51,8 @@ export async function assetBridgeHandler(client: Client, command: Command) {
       ],
     },
   ]);
-  const { chainName } = await inquirer.prompt([
+
+  const { chainName } = await prompts([
     {
       type: "list",
       name: "chainName",
@@ -58,6 +62,7 @@ export async function assetBridgeHandler(client: Client, command: Command) {
         .map((v) => v.name),
     },
   ]);
+
   const chainInfo = Object.values(CHAIN_INFOS).filter(
     (v) => v.name == chainName
   )[0];
@@ -85,14 +90,9 @@ export async function assetBridgeHandler(client: Client, command: Command) {
         CONTRACT_TYPE.ASSET_BRIDGE
       );
 
-      // address _dexSpan,
-      // address _gatewayAddress,
-      // string memory chainId,
-      // string memory routerBridgeAddress,
-      // uint256 startNonce
       const oldDexspan = "";
       const { dexSpanAddress, gatewayAddress, middlewareAddress, startNonce } =
-        await inquirer.prompt([
+        await prompts([
           {
             type: "input",
             name: "dexSpanAddress",
@@ -134,7 +134,7 @@ export async function assetBridgeHandler(client: Client, command: Command) {
           {
             type: "input",
             name: "startNonce",
-            message: `Enter startNonce: }`,
+            message: `Enter startNonce: `,
             default: "0",
             askAnswered: true,
           },

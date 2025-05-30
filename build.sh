@@ -72,5 +72,5 @@ compile_contracts() {
 }
 
 # Compile each contract package
-compile_contracts "contracts/router-gateway-contracts/evm"
-compile_contracts "contracts/asset-bridge-contracts/evm"
+compile_contracts "router-contracts/router-gateway-contracts/evm"
+compile_contracts "router-contracts/asset-bridge-contracts/evm"
