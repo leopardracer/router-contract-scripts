@@ -1,6 +1,5 @@
 import { Command } from "commander";
 import inquirer from "inquirer";
-import chalk from "chalk";
 import { Client } from "../../client/client";
 import {
   CHAIN_ENVIRONMENT,
@@ -9,11 +8,8 @@ import {
 } from "../../types/chains";
 import { EncodedWallet } from "../../wallet";
 import { CHAIN_INFOS } from "../../config/chains";
-import ora from "ora";
-import { ContractVerifier } from "../utils/verify-contract";
-import path from "path";
 import { CONTRACT_TYPE } from "../../types/types";
-import { askKeepPrivate, askShowPrivate } from "../asker/wallet";
+import { askShowPrivate } from "../asker/wallet";
 
 export async function gatewayHandler(client: Client, command: Command) {
   const { option, chainType, rotuerChainEnvironment } = await inquirer.prompt([
@@ -21,7 +17,7 @@ export async function gatewayHandler(client: Client, command: Command) {
       type: "list",
       name: "option",
       message: "Select your options: ",
-      choices: ["Deploy", "Verify", "Pause", "Unpause", "Validate Contract"],
+      choices: ["Deploy", "Verify", "Validate Contract", "Pause", "Unpause"],
     },
     {
       type: "list",
@@ -46,13 +42,19 @@ export async function gatewayHandler(client: Client, command: Command) {
       name: "chainName",
       message: "Select your chain: ",
       choices: Object.values(CHAIN_INFOS)
-        .filter((v) => v.chainType == CHAIN_TYPE_FROM_STRING(chainType))
+        .filter(
+          (v) =>
+            v.chainType == CHAIN_TYPE_FROM_STRING(chainType) &&
+            v.env == rotuerChainEnvironment
+        )
         .map((v) => v.name),
     },
   ]);
   const chainInfo = Object.values(CHAIN_INFOS).filter(
     (v) => v.name == chainName
   )[0];
+  await client.connect(chainInfo);
+
   switch (option) {
     case "Deploy":
       const { deployRoute } = await inquirer.prompt([
@@ -89,11 +91,7 @@ export async function gatewayHandler(client: Client, command: Command) {
             valsetNonce,
           });
 
-          const {
-            proxyContractAddress,
-            implementationContractAddress,
-            valsetUpdateAddress,
-          } = await client.deployContract(
+          await client.deployContract(
             {
               type: CONTRACT_TYPE.GATEWAY,
               chainInfo,
@@ -103,11 +101,6 @@ export async function gatewayHandler(client: Client, command: Command) {
             },
             wallet
           );
-          console.log({
-            proxyContractAddress,
-            implementationContractAddress,
-            valsetUpdateAddress,
-          });
           break;
         }
         case "ZK_EVM": {
@@ -123,11 +116,7 @@ export async function gatewayHandler(client: Client, command: Command) {
             valsetNonce,
           });
 
-          const {
-            proxyContractAddress,
-            implementationContractAddress,
-            valsetUpdateAddress,
-          } = await client.deployContract(
+          await client.deployContract(
             {
               type: CONTRACT_TYPE.GATEWAY,
               chainInfo,
@@ -137,11 +126,6 @@ export async function gatewayHandler(client: Client, command: Command) {
             },
             wallet
           );
-          console.log({
-            proxyContractAddress,
-            implementationContractAddress,
-            valsetUpdateAddress,
-          });
           break;
         }
         case "SOLANA":
@@ -162,80 +146,32 @@ export async function gatewayHandler(client: Client, command: Command) {
           message: "Enter Gateway Address: ",
         },
       ]);
-      const verifier = new ContractVerifier(
-        CHAIN_TYPE_FROM_STRING(chainType),
-        chainInfo
-      );
-      switch (chainType) {
-        case "EVM":
-          try {
-            const response = await verifier.verify(contractAddress, [], {
-              cwd: path.join(
-                __dirname,
-                "../../../contracts/router-gateway-contracts/evm"
-              ),
-              contractPath: `contracts/GatewayUpgradeable.sol`,
-              contractName: "GatewayUpgradeable",
-            });
-            // const response = await verifier.verify(
-            //   contractAddress,
-            //   [
-            //     "0xE6B9B347F4252C888c2b1Ab983742647C81245Aa",
-            //     "0xb60bC1ed271E4031fAfF359Ee306CE4E1A1848E8",
-            //   ],
-            //   {
-            //     cwd: path.join(
-            //       __dirname,
-            //       "../../../contracts/router-gateway-contracts/evm"
-            //     ),
-            //     contractPath: `contracts/AssetVault.sol`,
-            //     contractName: "AssetVault",
-            //   }
-            // );
-            console.log(response);
-          } catch (error) {
-            console.log(error);
-          }
-          break;
-        case "SOLANA":
-          break;
-        case "SUBSTRATE":
-          break;
-        case "TON":
-          break;
-        case "SUI":
-          break;
-      }
-      break;
-    case "Pause":
-      break;
-    case "Unpause":
+      await client.verifyContract({
+        contractAddress,
+        type: CONTRACT_TYPE.GATEWAY,
+      });
       break;
     case "Validate Contract": {
-      const { gatewayProxyAddress } = await inquirer.prompt([
-        {
-          type: "input",
-          name: "gatewayProxyAddress",
-          message: "Enter deployed gateway proxy address...",
-        },
-      ]);
+      const { gatewayProxyAddress, roleShouldOnlyBeWith } =
+        await inquirer.prompt([
+          {
+            type: "input",
+            name: "gatewayProxyAddress",
+            message: "Enter deployed gateway proxy address...",
+          },
+          {
+            type: "input",
+            name: "roleShouldOnlyBeWith",
+            message: "Enter address for which role should have...",
+          },
+        ]);
       switch (chainType) {
         case "EVM": {
-          const wallet = new EncodedWallet(CHAIN_TYPE.EVM);
-          await wallet.connect();
-          await wallet.selectWallet(await askShowPrivate());
-          const { validators, powers, valsetNonce } =
-            await client.fetchValsetUpdate(rotuerChainEnvironment);
-          const isValid = await client.validateDeployedContract(
-            {
-              type: CONTRACT_TYPE.GATEWAY,
-              chainInfo,
-              args: [chainInfo.chainId, validators, powers, valsetNonce],
-              contractAddress: gatewayProxyAddress,
-            },
-            wallet
-          );
-          console.log("Contract is validated");
+          await client.validateDeployedContract({
+            contractAddress: gatewayProxyAddress,
+            roleShouldOnlyBeWith,
+            rotuerChainEnvironment,
+          });
           break;
         }
         case "SOLANA":
@@ -250,5 +186,9 @@ export async function gatewayHandler(client: Client, command: Command) {
 
       break;
     }
+    case "Pause":
+      break;
+    case "Unpause":
+      break;
   }
 }

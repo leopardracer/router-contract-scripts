@@ -1,10 +1,6 @@
-import { ethers, JsonRpcProvider } from "ethers";
+import { ethers } from "ethers";
 import { EncodedWallet } from "../wallet";
-import {
-  CHAIN_ENVIRONMENT,
-  CHAIN_TYPE,
-  CHAIN_TYPE_FROM_STRING,
-} from "../types/chains";
+import { CHAIN_ENVIRONMENT, CHAIN_TYPE } from "../types/chains";
 import {
   abi as ERC1967ProxyAbi,
   bytecode as ERC1967ProxyBytecode,
@@ -21,6 +17,8 @@ import { sleep } from "../helper/utils/utils";
 import * as anchor from "@coral-xyz/anchor";
 import { Connection } from "@solana/web3.js";
 import { Keypair } from "@solana/web3.js";
+import { GatewayClient } from "./helper/gateway";
+import { AssetBridgeClient } from "./helper/asset-bridge";
 
 export class Client {
   verifier: ContractVerifier;
@@ -31,18 +29,19 @@ export class Client {
 
   constructor() {}
 
-  async connect(chainInfo: any, wallet: EncodedWallet) {
+  async connect(chainInfo: any, wallet?: EncodedWallet) {
     this.chainInfo = chainInfo;
     this.chain = chainInfo.chainType;
     switch (chainInfo.chainType) {
       case CHAIN_TYPE.EVM:
         this.verifier = new ContractVerifier(chainInfo.chainType, chainInfo);
         this.provider = new ethers.JsonRpcProvider(chainInfo.rpcs[0]);
-        this.wallet = wallet.getChainWallet().connect(this.provider);
+        if (wallet)
+          this.wallet = wallet.getChainWallet().connect(this.provider);
         break;
       case CHAIN_TYPE.SOLANA:
         // this.verifier = null;
-        this.wallet = wallet.getChainWallet();
+        if (wallet) this.wallet = wallet.getChainWallet();
         this.provider = new anchor.AnchorProvider(
           new Connection(chainInfo.rpcs[0]),
           this.wallet,
@@ -275,7 +274,6 @@ export class Client {
     await valsetUpdate.waitForDeployment();
     const valsetUpdateAddress = await valsetUpdate.getAddress();
 
-    // const valsetUpdateAddress = "0x4356592b6CB360c25EfC2f6AFC2bB55266A1ab7E";
     spinner.succeed(
       chalk.green(`Valset Update deployed at: ${valsetUpdateAddress}`)
     );
@@ -300,8 +298,7 @@ export class Client {
     await implementationContract.waitForDeployment();
     const implementationContractAddress =
       await implementationContract.getAddress();
-    // const implementationContractAddress =
-    //   "0x9Eec6b4234b021be35502F7Ec872969352F56882";
+
     spinner.succeed(
       chalk.green(
         `Gateway Implementation deployed at: ${implementationContractAddress}`
@@ -330,7 +327,7 @@ export class Client {
     let block = await tx.deploymentTransaction()?.getBlock();
     spinner.succeed(
       chalk.green(
-        `[Share With Router Team] Proxy deployed at: ${proxyContractAddress} | BlockNumber: ${block?.number}`
+        `[Share With Router Team Along ChainConfig] Proxy deployed at: ${proxyContractAddress} | BlockNumber: ${block?.number}`
       )
     );
 
@@ -479,19 +476,9 @@ export class Client {
     let block = await tx.deploymentTransaction()?.getBlock();
     spinner.succeed(
       chalk.green(
-        `[Share With Router Team] Proxy deployed at: ${proxyContractAddress} | BlockNumber: ${block?.number}`
+        `[Share With Router Team Along ChainConfig] Proxy deployed at: ${proxyContractAddress} | BlockNumber: ${block?.number}`
       )
     );
-
-    await sleep(6000);
-    await this.verifier.verify(proxyContractAddress, args, {
-      cwd: path.join(
-        __dirname,
-        "../../router-contracts/asset-bridge-contracts/evm"
-      ),
-      contractPath: `router-contracts/AssetBridgeUpgradeable.sol`,
-      contractName: "AssetBridgeUpgradeable",
-    });
 
     // const AssetBridge = await fs.readJSON(
     //   path.join(
@@ -571,20 +558,42 @@ export class Client {
     };
   }
 
-  async validateDeployedContract(
-    {
-      type,
-      args,
-      chainInfo,
+  async verifyContract({
+    type,
+    contractAddress,
+  }: {
+    type: CONTRACT_TYPE;
+    contractAddress: string;
+  }): Promise<any> {
+    switch (type) {
+      case CONTRACT_TYPE.GATEWAY:
+        return await new GatewayClient(contractAddress, this).verifyContract();
+      case CONTRACT_TYPE.ASSET_BRIDGE:
+        return await new AssetBridgeClient(
+          contractAddress,
+          this
+        ).verifyContract();
+      default:
+        throw "not implemented yet";
+    }
+  }
+
+  async validateDeployedContract({
+    contractAddress,
+    roleShouldOnlyBeWith,
+    rotuerChainEnvironment,
+  }: {
+    contractAddress: string;
+    roleShouldOnlyBeWith: string;
+    rotuerChainEnvironment: CHAIN_ENVIRONMENT;
+  }) {
+    const { isValid, message } = await new GatewayClient(
       contractAddress,
-    }: {
-      type: CONTRACT_TYPE;
-      args: any;
-      chainInfo: any;
-      contractAddress: boolean;
-    },
-    wallet: EncodedWallet
-  ): Promise<boolean> {
-    return true;
+      this
+    ).validateContract(roleShouldOnlyBeWith, rotuerChainEnvironment);
+    console.log({
+      isValid,
+      message,
+    });
   }
 }

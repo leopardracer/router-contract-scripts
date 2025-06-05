@@ -1,6 +1,5 @@
 import { Command } from "commander";
 import inquirer from "inquirer";
-import chalk from "chalk";
 import { Client } from "../../client/client";
 import { CHAIN_INFOS } from "../../config/chains";
 import {
@@ -23,6 +22,7 @@ export async function assetBridgeHandler(client: Client, command: Command) {
       message: "Select your options:",
       choices: [
         "Deploy",
+        "Verify",
         "SetDappMetadata",
         "Pause",
         "Unpause",
@@ -66,12 +66,14 @@ export async function assetBridgeHandler(client: Client, command: Command) {
   const chainInfo = Object.values(CHAIN_INFOS).filter(
     (v) => v.name == chainName
   )[0];
-  const wallet = new EncodedWallet(CHAIN_TYPE_FROM_STRING(chainType));
-  await wallet.connect();
-  await wallet.selectWallet(await askShowPrivate());
+  await client.connect(chainInfo);
 
   switch (option) {
-    case "Deploy":
+    case "Deploy": {
+      const wallet = new EncodedWallet(CHAIN_TYPE_FROM_STRING(chainType));
+      await wallet.connect();
+      await wallet.selectWallet(await askShowPrivate());
+
       const routerChainInfo: any = Object.values(CHAIN_INFOS).find(
         (v) =>
           v.chainType == CHAIN_TYPE.ROUTER && v.env == rotuerChainEnvironment
@@ -157,6 +159,21 @@ export async function assetBridgeHandler(client: Client, command: Command) {
         assetBridgeAddress,
       });
       break;
+    }
+    case "Verify": {
+      const { contractAddress } = await inquirer.prompt([
+        {
+          type: "input",
+          name: "contractAddress",
+          message: "Enter Asset Bridge Address: ",
+        },
+      ]);
+      await client.verifyContract({
+        contractAddress,
+        type: CONTRACT_TYPE.GATEWAY,
+      });
+      break;
+    }
     case "SetDappMetadata":
       break;
     case "Pause":

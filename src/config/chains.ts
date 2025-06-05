@@ -159,7 +159,7 @@ export const CHAIN_INFOS = {
     symbol: "AVAX",
     urls: {
       apiURL: "https://api-testnet.snowtrace.io/api",
-      browserURL: "https://testnet.snowtrace.io/",
+      browserURL: "https://testnet.snowtrace.io",
     },
     decimals: 18,
     apiKey: "QAE2JD7XIBCYB6Z6GSKNJIHKZ8XGVYM8AI",
@@ -195,6 +195,7 @@ export const CHAIN_INFOS = {
       apiURL: "https://api-sepolia.etherscan.io/api",
       browserURL: "https://sepolia.etherscan.io",
     },
+    apiKey: "2GCDSTNXT5YGH4NPGI6M97VQIC533R1MBZ",
   },
   // "100100": {
   //   rpcs: ["https://evmtestus1.testnet.romeprotocol.xyz"],

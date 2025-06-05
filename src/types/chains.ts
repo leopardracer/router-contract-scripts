@@ -39,6 +39,6 @@ export const CHAIN_TYPE_FROM_STRING = (chainType: string) => {
     case "NONE":
       return CHAIN_TYPE.NONE;
     default:
-      return CHAIN_TYPE.NONE;
+      throw "unknow string " + chainType;
   }
 };

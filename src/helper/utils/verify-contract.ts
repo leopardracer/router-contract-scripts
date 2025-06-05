@@ -1,11 +1,10 @@
 import path from "path";
-import { CHAIN_ENVIRONMENT, CHAIN_TYPE } from "../../types/chains";
+import { CHAIN_TYPE } from "../../types/chains";
 import { Etherscan } from "./evm/verify-utils/etherscan";
 import { exec } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs-extra";
 import { encodeArguments } from "./evm/verify-utils/utilities";
-import { ContractVerificationFailedError } from "./evm/verify-utils/errors";
 import ora from "ora";
 import chalk from "chalk";
 
@@ -37,10 +36,12 @@ export class ContractVerifier {
       cwd,
       contractPath,
       contractName,
+      libraries,
     }: {
       cwd: string;
       contractPath: string;
       contractName: string;
+      libraries?: Object;
     }
   ) {
     this.spinner.start(`Verifiying Contract ${contractAddress}...`);
@@ -107,11 +108,7 @@ export class ContractVerifier {
               "*": ["evm.bytecode.object", "abi"],
             },
           },
-          libraries: {
-            "contracts/libraries/ValsetUpdate.sol": {
-              "ValsetUpdate": "0x8Ad8848E45850e5d10F9AC90bA630C34e55Dc7b0",
-            },
-          },
+          libraries: libraries ? libraries : {},
         },
       },
       {

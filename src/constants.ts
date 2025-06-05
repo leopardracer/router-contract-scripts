@@ -1,0 +1,13 @@
+export enum CHAIN_TYPE {
+  EVM = "EVM",
+  ZK_EVM = "ZK_EVM",
+  SOLANA = "SOLANA",
+  SUBSTRATE = "SUBSTRATE",
+  TON = "TON",
+  SUI = "SUI",
+}
+
+export enum CONTRACT_TYPE {
+  GATEWAY = "GATEWAY",
+  ASSET_BRIDGE = "ASSET_BRIDGE",
+}
