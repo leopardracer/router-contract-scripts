@@ -382,7 +382,7 @@ export class EncodedWallet {
     isSeed: boolean = true,
     chainType: CHAIN_TYPE = this.chain
   ): Promise<void> {
-    //TODO: handle pk for different chains if necesary
+    //TODO: handle pk for different chains if necessary
     this.fillDefault();
     const chainKey = {
       [CHAIN_TYPE.EVM]: "evm",
