@@ -58,7 +58,7 @@ function handle(client: Client, command: Command) {
   command
     // .command("")
     .description("rsc handler")
-    // .argument("<password>", "password to encrpt key")
+    // .argument("<password>", "password to encrypt key")
     .action(async (password) => {
       try {
         let answers = await inquirer.prompt([
